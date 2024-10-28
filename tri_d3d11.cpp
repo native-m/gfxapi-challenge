@@ -47,6 +47,7 @@ void initialize(HWND hwnd) {
                                              &swapchain_desc, &new_swapchain, &device, nullptr, &ctx);
     assert(SUCCEEDED(hr));
     new_swapchain->QueryInterface(&swapchain);
+    new_swapchain->Release();
 
     ID3D11Texture2D* backbuffer {};
     swapchain->GetBuffer(0, IID_PPV_ARGS(&backbuffer));

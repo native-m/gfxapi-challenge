@@ -20,4 +20,5 @@ set_property(TARGET tri_d3d11 PROPERTY CXX_STANDARD 20)
 
 add_executable(tri_d3d12 "tri_d3d12.cpp")
 target_link_libraries(tri_d3d12 PUBLIC mainlib)
+add_dependencies(tri_d3d12 d3d12_shaders)
 set_property(TARGET tri_d3d12 PROPERTY CXX_STANDARD 20)
