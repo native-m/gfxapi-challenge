@@ -7,6 +7,7 @@ using PfnCreateDXGIFactory2 = HRESULT(WINAPI*)(UINT flags, REFIID riid, _COM_Out
 
 static constexpr uint32_t buffer_count = 2;
 
+static IDXGIFactory2* factory;
 static ID3D12Device* device;
 static ID3D12CommandQueue* queue;
 static IDXGISwapChain3* swapchain;
@@ -56,7 +57,6 @@ void initialize(HWND hwnd) {
     debug->EnableDebugLayer();
     debug->Release();
 
-    IDXGIFactory2* factory;
     hr = create_dxgi_factory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&factory));
     assert(SUCCEEDED(hr));
 
@@ -70,6 +70,7 @@ void initialize(HWND hwnd) {
     std::wcout << L"Adapter: " << adapter_desc.Description << std::endl;
 
     hr = create_device(adapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
+    adapter->Release();
     assert(SUCCEEDED(hr));
 
     D3D12_COMMAND_QUEUE_DESC queue_desc {
@@ -261,6 +262,7 @@ void shutdown() {
     swapchain->Release();
     queue->Release();
     device->Release();
+    factory->Release();
 }
 
 void render() {
@@ -322,15 +324,17 @@ void render() {
     queue->ExecuteCommandLists(1, &command_list);
     swapchain->Present(1, 0);
 
+    // Synchronization
     uint64_t current_fence_value = fence_value[frame_index];
     queue->Signal(fence, current_fence_value);
 
-    frame_index = swapchain->GetCurrentBackBufferIndex();
+    uint32_t next_frame = swapchain->GetCurrentBackBufferIndex();
     uint64_t completed_value = fence->GetCompletedValue();
-    if (completed_value < fence_value[frame_index]) {
-        fence->SetEventOnCompletion(fence_value[frame_index], fence_event);
+    if (completed_value < fence_value[next_frame]) {
+        fence->SetEventOnCompletion(fence_value[next_frame], fence_event);
         WaitForSingleObjectEx(fence_event, INFINITE, FALSE);
     }
 
-    fence_value[frame_index] = current_fence_value + 1;
+    fence_value[next_frame] = current_fence_value + 1;
+    frame_index = next_frame;
 }

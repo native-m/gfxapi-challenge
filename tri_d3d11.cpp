@@ -109,6 +109,8 @@ void initialize(HWND hwnd) {
 }
 
 void shutdown() {
+    raster_state->Release();
+    input_layout->Release();
     vtx_buffer->Release();
     ps->Release();
     vs->Release();
